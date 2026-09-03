@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="Extract readable HTML articles as clean Markdown."
+    />
+    <title>html → md</title>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header" aria-label="Primary navigation">
+        <a class="wordmark" href="#extract" aria-label="HTML to Markdown home">
+          <img class="brand-mark" src="/assets/icons/triangle.svg" alt="" width="28" height="28" />
+          <span>html <span aria-hidden="true">→</span> md</span>
+        </a>
+        <nav class="site-nav" aria-label="Information">
+          <button class="nav-link" type="button" data-dialog-section="how">How it works</button>
+          <button class="nav-link" type="button" data-dialog-section="privacy">Privacy</button>
+          <button class="nav-link" type="button" data-dialog-section="about">About</button>
+        </nav>
+      </header>
+
+      <main id="extract" class="hero">
+        <section class="input-column" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <h1 id="page-title">Paste a link.<br />Keep the article.</h1>
+            <p class="hero-description">Turn readable HTML into clean Markdown for Obsidian.</p>
+          </div>
+
+          <form id="extract-form" class="extract-form" novalidate>
+            <label for="article-url">Article URL</label>
+            <div class="url-control">
+              <input
+                id="article-url"
+                name="url"
+                type="url"
+                value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content/Basic_HTML_syntax"
+                placeholder="https://example.com/article"
+                inputmode="url"
+                autocomplete="url"
+                spellcheck="false"
+                required
+              />
+              <button id="extract-button" class="primary-action" type="submit">
+                <span>Extract Markdown</span>
+              </button>
+            </div>
+            <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="preview-shell" aria-labelledby="preview-title">
+          <div class="preview-card">
+            <div class="preview-toolbar">
+              <h2 id="preview-title">Markdown preview</h2>
+              <div class="preview-actions">
+                <button id="copy-button" class="icon-action" type="button" aria-label="Copy Markdown">
+                  <img class="action-icon" src="/assets/icons/copy.svg" alt="" width="22" height="22" />
+                </button>
+                <button id="download-button" class="icon-action" type="button" aria-label="Download Markdown file">
+                  <img class="action-icon" src="/assets/icons/download-simple.svg" alt="" width="22" height="22" />
+                </button>
+              </div>
+            </div>
+
+            <div id="capture-status" class="capture-status" data-status="partial">
+              Partial · paywall detected
+            </div>
+            <pre id="markdown-preview" class="markdown-preview" tabindex="0"><code id="markdown-output"></code></pre>
+          </div>
+        </section>
+      </main>
+
+      <dialog id="info-dialog" class="info-dialog">
+        <div class="dialog-header">
+          <p id="dialog-label" class="detail-label"></p>
+          <button id="dialog-close" class="dialog-close" type="button">Close</button>
+        </div>
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-copy"></p>
+      </dialog>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
