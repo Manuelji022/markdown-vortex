@@ -17,4 +17,4 @@ RUN pnpm install --prod --frozen-lockfile
 COPY --from=build /app/dist ./dist
 
 EXPOSE 4173
-CMD ["node", "dist/vps/index.js", "--host", "0.0.0.0", "--port", "4173"]
+CMD ["node", "dist/vps/server/index.js", "--host", "0.0.0.0", "--port", "4173"]

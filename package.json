@@ -6,11 +6,10 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "node --import tsx/esm server/index.ts",
-    "build": "vite build && tsc -p tsconfig.server.json && node scripts/prepare-sites-build.mjs",
-    "start": "NODE_ENV=production node dist/vps/index.js",
+    "build": "vite build && tsc -p tsconfig.server.json",
+    "start": "NODE_ENV=production node dist/vps/server/index.js --host 0.0.0.0",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
-    "test": "vitest run",
-    "test:sites": "node --test tests/sites-worker.test.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/middie": "^9.3.3",

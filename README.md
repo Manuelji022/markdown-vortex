@@ -29,8 +29,17 @@ Open `http://localhost:4173`.
 pnpm check
 pnpm test
 pnpm build
-pnpm test:sites
 ```
+
+## Dokploy with Railpack
+
+Select the Railpack build type for the application. The existing package scripts are sufficient:
+
+- Build command: `pnpm build`
+- Start command: `pnpm start`
+- Application port: `4173`
+
+No additional Railpack configuration is required.
 
 ## Production
 
