@@ -14,13 +14,25 @@
     <div class="site-shell">
       <header class="site-header" aria-label="Primary navigation">
         <a class="wordmark" href="#extract" aria-label="HTML to Markdown home">
-          <img class="brand-mark" src="/assets/icons/triangle.svg" alt="" width="28" height="28" />
+          <img
+            class="brand-mark"
+            src="/assets/icons/triangle.svg"
+            alt=""
+            width="28"
+            height="28"
+          />
           <span>html <span aria-hidden="true">→</span> md</span>
         </a>
         <nav class="site-nav" aria-label="Information">
-          <button class="nav-link" type="button" data-dialog-section="how">How it works</button>
-          <button class="nav-link" type="button" data-dialog-section="privacy">Privacy</button>
-          <button class="nav-link" type="button" data-dialog-section="about">About</button>
+          <button class="nav-link" type="button" data-dialog-section="how">
+            How it works
+          </button>
+          <button class="nav-link" type="button" data-dialog-section="privacy">
+            Privacy
+          </button>
+          <button class="nav-link" type="button" data-dialog-section="about">
+            About
+          </button>
         </nav>
       </header>
 
@@ -28,7 +40,9 @@
         <section class="input-column" aria-labelledby="page-title">
           <div class="hero-copy">
             <h1 id="page-title">Paste a link.<br />Keep the article.</h1>
-            <p class="hero-description">Turn readable HTML into clean Markdown for Obsidian.</p>
+            <p class="hero-description">
+              Turn readable HTML into clean Markdown.
+            </p>
           </div>
 
           <form id="extract-form" class="extract-form" novalidate>
@@ -49,7 +63,12 @@
                 <span>Extract Markdown</span>
               </button>
             </div>
-            <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
+            <p
+              id="form-message"
+              class="form-message"
+              role="status"
+              aria-live="polite"
+            ></p>
           </form>
         </section>
 
@@ -58,19 +77,49 @@
             <div class="preview-toolbar">
               <h2 id="preview-title">Markdown preview</h2>
               <div class="preview-actions">
-                <button id="copy-button" class="icon-action" type="button" aria-label="Copy Markdown">
-                  <img class="action-icon" src="/assets/icons/copy.svg" alt="" width="22" height="22" />
+                <button
+                  id="copy-button"
+                  class="icon-action"
+                  type="button"
+                  aria-label="Copy Markdown"
+                >
+                  <img
+                    class="action-icon"
+                    src="/assets/icons/copy.svg"
+                    alt=""
+                    width="22"
+                    height="22"
+                  />
                 </button>
-                <button id="download-button" class="icon-action" type="button" aria-label="Download Markdown file">
-                  <img class="action-icon" src="/assets/icons/download-simple.svg" alt="" width="22" height="22" />
+                <button
+                  id="download-button"
+                  class="icon-action"
+                  type="button"
+                  aria-label="Download Markdown file"
+                >
+                  <img
+                    class="action-icon"
+                    src="/assets/icons/download-simple.svg"
+                    alt=""
+                    width="22"
+                    height="22"
+                  />
                 </button>
               </div>
             </div>
 
-            <div id="capture-status" class="capture-status" data-status="partial">
+            <div
+              id="capture-status"
+              class="capture-status"
+              data-status="partial"
+            >
               Partial · paywall detected
             </div>
-            <pre id="markdown-preview" class="markdown-preview" tabindex="0"><code id="markdown-output"></code></pre>
+            <pre
+              id="markdown-preview"
+              class="markdown-preview"
+              tabindex="0"
+            ><code id="markdown-output"></code></pre>
           </div>
         </section>
       </main>
@@ -78,7 +127,9 @@
       <dialog id="info-dialog" class="info-dialog">
         <div class="dialog-header">
           <p id="dialog-label" class="detail-label"></p>
-          <button id="dialog-close" class="dialog-close" type="button">Close</button>
+          <button id="dialog-close" class="dialog-close" type="button">
+            Close
+          </button>
         </div>
         <h2 id="dialog-title"></h2>
         <p id="dialog-copy"></p>
