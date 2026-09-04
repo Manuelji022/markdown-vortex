@@ -133,6 +133,42 @@ a {
   gap: 3.5rem;
 }
 
+.site-footer {
+  width: min(100%, 1600px);
+  margin-inline: auto;
+  padding: 1.25rem 40px 2rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.site-footer-credit {
+  margin: 0;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.site-footer-link {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 140ms ease;
+}
+
+.site-footer-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+}
+
 .input-column {
   min-width: 0;
   padding-top: clamp(5rem, 10.5vh, 6.75rem);
@@ -463,6 +499,10 @@ h1 {
   .site-header {
     min-height: 78px;
     padding: 22px 20px 12px;
+  }
+
+  .site-footer {
+    padding-inline: 20px;
   }
 
   .site-nav {
