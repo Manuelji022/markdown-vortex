@@ -32,6 +32,7 @@ describe("article extraction", () => {
     expect(result.status).toEqual({ kind: "complete" });
     expect(result.filename).toBe("readable-systems.md");
     expect(result.markdown).toContain("# Readable systems");
+    expect(result.markdown).toContain("tags: []");
     expect(result.markdown).toContain("A useful section");
     expect(result.markdown).not.toContain("Home Archive Subscribe");
   });
@@ -61,6 +62,7 @@ describe("article extraction", () => {
     });
 
     expect(markdown).toContain('title: "A title: with punctuation"');
+    expect(markdown).toContain("tags: []");
     expect(markdown).toContain("![Diagram](https://example.com/diagram.png)");
   });
 });

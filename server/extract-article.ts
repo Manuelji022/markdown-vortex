@@ -46,6 +46,7 @@ export function buildMarkdown(options: MarkdownOptions): string {
   const lines = [
     "---",
     `title: ${yamlValue(options.title)}`,
+    "tags: []",
     `source: ${yamlValue(options.canonicalUrl)}`,
   ];
 

@@ -21,6 +21,7 @@ const sampleDocument = {
   markdown: `---
 title: "Basic HTML syntax"
 author: "MDN contributors"
+tags: []
 source: "${SAMPLE_URL}"
 site: "MDN Web Docs"
 published: "n.d."
