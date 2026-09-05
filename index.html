@@ -8,21 +8,42 @@
       name="description"
       content="Extract readable HTML articles as clean Markdown."
     />
-    <title>html → md</title>
+    <title>HTML → Markdown</title>
   </head>
   <body>
     <div class="site-shell">
       <header class="site-header" aria-label="Primary navigation">
-        <a class="wordmark" href="#extract" aria-label="HTML to Markdown home">
-          <img
-            class="brand-mark"
-            src="/assets/icons/triangle.svg"
-            alt=""
-            width="28"
-            height="28"
-          />
-          <span>html <span aria-hidden="true">→</span> md</span>
-        </a>
+        <div class="brand-cluster">
+          <a class="brand-home" href="/" aria-label="Markdown converter home">
+            <img
+              class="brand-mark"
+              src="/assets/icons/triangle.svg"
+              alt=""
+              width="28"
+              height="28"
+            />
+          </a>
+          <nav class="mode-switch" aria-label="Conversion mode">
+            <a
+              class="mode-option"
+              href="/"
+              data-conversion-mode="article"
+              aria-label="HTML to Markdown"
+            >
+              <span class="mode-source">html</span>
+              <span class="mode-output" aria-hidden="true">→ md</span>
+            </a>
+            <a
+              class="mode-option"
+              href="/youtube"
+              data-conversion-mode="youtube"
+              aria-label="YouTube transcript to Markdown"
+            >
+              <span class="mode-source">youtube</span>
+              <span class="mode-output" aria-hidden="true">→ md</span>
+            </a>
+          </nav>
+        </div>
         <nav class="site-nav" aria-label="Information">
           <button class="nav-link" type="button" data-dialog-section="how">
             How it works
@@ -40,16 +61,16 @@
         <section class="input-column" aria-labelledby="page-title">
           <div class="hero-copy">
             <h1 id="page-title">Paste a link.<br />Keep the article.</h1>
-            <p class="hero-description">
+            <p id="hero-description" class="hero-description">
               Turn readable HTML into clean Markdown.
             </p>
           </div>
 
           <form id="extract-form" class="extract-form" novalidate>
-            <label for="article-url">Article URL</label>
+            <label id="url-label" for="source-url">Article URL</label>
             <div class="url-control">
               <input
-                id="article-url"
+                id="source-url"
                 name="url"
                 type="url"
                 value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content/Basic_HTML_syntax"

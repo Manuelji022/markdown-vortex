@@ -26,6 +26,9 @@ importers:
       linkedom:
         specifier: ^0.18.13
         version: 0.18.13
+      youtube-transcript-plus:
+        specifier: ^2.0.1
+        version: 2.0.1
     devDependencies:
       '@types/node':
         specifier: ^26.4.0
@@ -1097,6 +1100,10 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
+  youtube-transcript-plus@2.0.1:
+    resolution: {integrity: sha512-rU49uSbhRJzGNGtXCfx347W2xv7hJp+WDWCuY8rdA+AVcZACi6MnRuH+2JxyUpvtZOT/dayfA/9vs2r9Zr7BjQ==}
+    engines: {node: '>=20.0.0'}
+
 snapshots:
 
   '@esbuild/aix-ppc64@0.28.2':
@@ -1950,3 +1957,5 @@ snapshots:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
+
+  youtube-transcript-plus@2.0.1: {}

@@ -14,6 +14,8 @@ Build app UI in `src/`. The app is deployed as a Node.js service with Dokploy/Ra
 - Keep the product HTML-only, stateless, and optimized for a small self-hosted VPS.
 - Do not add Chromium, Playwright, a database, authentication, history, or direct Obsidian integration.
 - The core flow is URL input → server-side HTML extraction → Markdown preview → copy or `.md` download.
+- Provide two shareable modes: HTML → Markdown at `/` and YouTube transcript → Markdown at `/youtube`, using a compact header mode switch.
+- YouTube mode is captions-only and keyless: accept public video URLs, use the default available caption track, group it into readable paragraphs without timestamps, and do not add audio transcription or proxies.
 - Preserve the selected mockup's minimalist monochrome editorial composition, oversized sans-serif headline, restrained navigation, soft neutral atmosphere, fine borders, generous whitespace, and high-contrast black actions.
 - Use a clearly public, non-paywalled article for the initial demo state; the first preview should communicate a complete successful capture rather than a partial or restricted result.
 - Prefer static semantic HTML and CSS for all visible structure and styling. Keep client JavaScript limited to the extraction request and essential interactive states.

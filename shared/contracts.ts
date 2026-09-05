@@ -21,7 +21,13 @@ export type ExtractionErrorCode =
   | "unsupported_content_type"
   | "response_too_large"
   | "fetch_failed"
-  | "extraction_failed";
+  | "extraction_failed"
+  | "invalid_youtube_url"
+  | "video_unavailable"
+  | "transcript_unavailable"
+  | "youtube_rate_limited"
+  | "transcript_timeout"
+  | "transcript_fetch_failed";
 
 export type ExtractionApiResponse =
   | { kind: "success"; document: ExtractedDocument }

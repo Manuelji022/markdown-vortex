@@ -6,7 +6,9 @@ import { createServer as createViteServer } from "vite";
 import type { ExtractionApiResponse } from "../shared/contracts.js";
 import { ExtractionFailure } from "./errors.js";
 import { extractArticle } from "./extract-article.js";
+import { extractYoutubeTranscript } from "./extract-youtube-transcript.js";
 import { registerExtractionRoute } from "./extraction-route.js";
+import { registerTranscriptRoute } from "./transcript-route.js";
 
 function readArgument(name: string, fallback: string): string {
   const index = process.argv.indexOf(name);
@@ -33,6 +35,7 @@ const app = Fastify({
 
 app.get("/api/health", async () => ({ status: "ok" }));
 registerExtractionRoute(app, { extract: extractArticle });
+registerTranscriptRoute(app, { extract: extractYoutubeTranscript });
 
 app.setErrorHandler((error, _request, reply) => {
   if (error instanceof ExtractionFailure) {

@@ -60,88 +60,69 @@ Keep opening and closing tags correctly nested so the structure remains predicta
 `,
 } satisfies ExtractedDocument;
 
-/* Static page structure lives in index.html so it renders without client JavaScript.
-const app = document.getElementById("app");
-if (!app) throw new Error("Missing app root");
+type ConversionMode = "article" | "youtube";
 
-app.innerHTML = `
-  <div class="site-shell">
-    <header class="site-header" aria-label="Primary navigation">
-      <a class="wordmark" href="#extract" aria-label="HTML to Markdown home">
-        <i class="ph-fill ph-triangle" aria-hidden="true"></i>
-        <span>html <span aria-hidden="true">→</span> md</span>
-      </a>
-      <nav class="site-nav" aria-label="Information">
-        <button class="nav-link" type="button" data-dialog-section="how">How it works</button>
-        <button class="nav-link" type="button" data-dialog-section="privacy">Privacy</button>
-        <button class="nav-link" type="button" data-dialog-section="about">About</button>
-      </nav>
-    </header>
+type ModeConfiguration = {
+  mode: ConversionMode;
+  endpoint: string;
+  title: string;
+  description: string;
+  headingHtml: string;
+  lede: string;
+  inputLabel: string;
+  placeholder: string;
+  initialValue: string;
+  submitLabel: string;
+  loadingLabel: string;
+  loadingStatus: string;
+  loadingPreview: string;
+  emptyStatus: string;
+  emptyPreview: string;
+  initialDocument: ExtractedDocument | null;
+};
 
-    <main id="extract" class="hero">
-      <section class="input-column" aria-labelledby="page-title">
-        <div class="hero-copy">
-          <h1 id="page-title">Paste a link.<br />Keep the article.</h1>
-          <p class="hero-description">Turn readable HTML into clean Markdown for Obsidian.</p>
-        </div>
+const articleMode: ModeConfiguration = {
+  mode: "article",
+  endpoint: "/api/extract",
+  title: "HTML → Markdown",
+  description: "Extract readable HTML articles as clean Markdown.",
+  headingHtml: "Paste a link.<br />Keep the article.",
+  lede: "Turn readable HTML into clean Markdown.",
+  inputLabel: "Article URL",
+  placeholder: "https://example.com/article",
+  initialValue: SAMPLE_URL,
+  submitLabel: "Extract Markdown",
+  loadingLabel: "Extracting…",
+  loadingStatus: "Fetching HTML…",
+  loadingPreview: "Reading the page and cleaning its article content…",
+  emptyStatus: "Ready for an article link",
+  emptyPreview: "Paste an article URL to create a clean Markdown note.",
+  initialDocument: sampleDocument,
+};
 
-        <form id="extract-form" class="extract-form" novalidate>
-          <label for="article-url">Article URL</label>
-          <div class="url-control">
-            <input
-              id="article-url"
-              name="url"
-              type="url"
-              value="${SAMPLE_URL}"
-              placeholder="https://example.com/article"
-              inputmode="url"
-              autocomplete="url"
-              spellcheck="false"
-              required
-            />
-            <button id="extract-button" class="primary-action" type="submit">
-              <span>Extract Markdown</span>
-            </button>
-          </div>
-          <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
-        </form>
-      </section>
+const youtubeMode: ModeConfiguration = {
+  mode: "youtube",
+  endpoint: "/api/transcript",
+  title: "YouTube transcript → Markdown",
+  description: "Turn public YouTube captions into readable Markdown.",
+  headingHtml: "Paste a video.<br />Keep the transcript.",
+  lede: "Turn YouTube captions into clean Markdown.",
+  inputLabel: "YouTube video URL",
+  placeholder: "https://youtube.com/watch?v=…",
+  initialValue: "",
+  submitLabel: "Extract Transcript",
+  loadingLabel: "Extracting…",
+  loadingStatus: "Fetching captions…",
+  loadingPreview: "Reading the available captions and shaping them into paragraphs…",
+  emptyStatus: "Ready for a YouTube link",
+  emptyPreview:
+    "Paste a public YouTube video with captions. Its transcript will appear here as readable Markdown.",
+  initialDocument: null,
+};
 
-      <section class="preview-shell" aria-labelledby="preview-title">
-        <div class="preview-card">
-          <div class="preview-toolbar">
-            <h2 id="preview-title">Markdown preview</h2>
-            <div class="preview-actions">
-              <button id="copy-button" class="icon-action" type="button" aria-label="Copy Markdown">
-                <i class="ph ph-copy" aria-hidden="true"></i>
-              </button>
-              <button id="download-button" class="icon-action" type="button" aria-label="Download Markdown file">
-                <i class="ph ph-download-simple" aria-hidden="true"></i>
-              </button>
-            </div>
-          </div>
-
-          <div id="capture-status" class="capture-status" data-status="partial">
-            Partial · paywall detected
-          </div>
-          <pre id="markdown-preview" class="markdown-preview" tabindex="0"><code id="markdown-output"></code></pre>
-        </div>
-      </section>
-    </main>
-
-    <dialog id="info-dialog" class="info-dialog">
-      <div class="dialog-header">
-        <p id="dialog-label" class="detail-label"></p>
-        <button id="dialog-close" class="dialog-close" type="button">Close</button>
-      </div>
-      <h2 id="dialog-title"></h2>
-      <p id="dialog-copy"></p>
-    </dialog>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  </div>
-`;
-*/
+const mode = window.location.pathname.replace(/\/+$/, "") === "/youtube"
+  ? youtubeMode
+  : articleMode;
 
 function requireElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -174,10 +155,14 @@ function requireDialog(id: string): HTMLDialogElement {
 }
 
 const form = requireForm("extract-form");
-const urlInput = requireInput("article-url");
+const urlInput = requireInput("source-url");
 const submitButton = requireButton("extract-button");
 const formMessage = requireElement("form-message");
+const pageTitle = requireElement("page-title");
+const heroDescription = requireElement("hero-description");
+const urlLabel = requireElement("url-label");
 const markdownOutput = requireElement("markdown-output");
+const markdownPreview = requireElement("markdown-preview");
 const captureStatus = requireElement("capture-status");
 const copyButton = requireButton("copy-button");
 const downloadButton = requireButton("download-button");
@@ -188,7 +173,7 @@ const dialogTitle = requireElement("dialog-title");
 const dialogCopy = requireElement("dialog-copy");
 const dialogClose = requireButton("dialog-close");
 
-let currentDocument: ExtractedDocument = sampleDocument;
+let currentDocument: ExtractedDocument | null = mode.initialDocument;
 let activeRequest: AbortController | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -243,6 +228,12 @@ function parseErrorCode(value: unknown): ExtractionErrorCode | null {
     case "response_too_large":
     case "fetch_failed":
     case "extraction_failed":
+    case "invalid_youtube_url":
+    case "video_unavailable":
+    case "transcript_unavailable":
+    case "youtube_rate_limited":
+    case "transcript_timeout":
+    case "transcript_fetch_failed":
       return value;
     default:
       return null;
@@ -267,6 +258,7 @@ function parseApiResponse(value: unknown): ExtractionApiResponse | null {
 
 function renderDocument(documentValue: ExtractedDocument): void {
   currentDocument = documentValue;
+  markdownPreview.classList.remove("is-empty");
   markdownOutput.textContent = documentValue.markdown;
   captureStatus.dataset.status = documentValue.status.kind;
   captureStatus.textContent =
@@ -279,17 +271,36 @@ function renderDocument(documentValue: ExtractedDocument): void {
   downloadButton.disabled = false;
 }
 
+function renderEmptyState(): void {
+  currentDocument = null;
+  markdownPreview.classList.add("is-empty");
+  markdownOutput.textContent = mode.emptyPreview;
+  captureStatus.dataset.status = "empty";
+  captureStatus.textContent = mode.emptyStatus;
+  copyButton.disabled = true;
+  downloadButton.disabled = true;
+}
+
+function restorePreview(): void {
+  if (currentDocument) {
+    renderDocument(currentDocument);
+  } else {
+    renderEmptyState();
+  }
+}
+
 function setLoading(loading: boolean): void {
   submitButton.disabled = loading;
   urlInput.disabled = loading;
   submitButton.classList.toggle("is-loading", loading);
   submitButton.querySelector("span")?.replaceChildren(
-    loading ? "Extracting…" : "Extract Markdown",
+    loading ? mode.loadingLabel : mode.submitLabel,
   );
   if (loading) {
     captureStatus.dataset.status = "loading";
-    captureStatus.textContent = "Fetching HTML…";
-    markdownOutput.textContent = "Reading the page and cleaning its article content…";
+    captureStatus.textContent = mode.loadingStatus;
+    markdownPreview.classList.add("is-empty");
+    markdownOutput.textContent = mode.loadingPreview;
     copyButton.disabled = true;
     downloadButton.disabled = true;
   }
@@ -302,11 +313,13 @@ function showToast(message: string): void {
 }
 
 async function copyMarkdown(): Promise<void> {
+  if (!currentDocument) return;
   await navigator.clipboard.writeText(currentDocument.markdown);
   showToast("Markdown copied");
 }
 
 function downloadMarkdown(): void {
+  if (!currentDocument) return;
   const blob = new Blob([currentDocument.markdown], { type: "text/markdown;charset=utf-8" });
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -331,15 +344,16 @@ form.addEventListener("submit", async (event) => {
   }
 
   activeRequest?.abort();
-  activeRequest = new AbortController();
+  const requestController = new AbortController();
+  activeRequest = requestController;
   setLoading(true);
 
   try {
-    const response = await fetch("/api/extract", {
+    const response = await fetch(mode.endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ url: urlInput.value }),
-      signal: activeRequest.signal,
+      signal: requestController.signal,
     });
     const payload: unknown = await response.json();
     const parsed = parseApiResponse(payload);
@@ -347,7 +361,7 @@ form.addEventListener("submit", async (event) => {
     if (!parsed) throw new Error("The server returned an unexpected response.");
     if (parsed.kind === "error") {
       formMessage.textContent = parsed.message;
-      renderDocument(currentDocument);
+      restorePreview();
       return;
     }
 
@@ -356,11 +370,13 @@ form.addEventListener("submit", async (event) => {
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") return;
     formMessage.textContent =
-      error instanceof Error ? error.message : "The page could not be extracted.";
-    renderDocument(currentDocument);
+      error instanceof Error ? error.message : "The content could not be extracted.";
+    restorePreview();
   } finally {
-    setLoading(false);
-    activeRequest = null;
+    if (activeRequest === requestController) {
+      setLoading(false);
+      activeRequest = null;
+    }
   }
 });
 
@@ -371,7 +387,7 @@ copyButton.addEventListener("click", () => {
 });
 downloadButton.addEventListener("click", downloadMarkdown);
 
-const dialogContent = {
+const articleDialogContent = {
   about: {
     label: "About",
     title: "Keep the readable page, lose the clutter.",
@@ -388,6 +404,26 @@ const dialogContent = {
     copy: "URLs and extracted articles are processed in memory. The application does not keep a history or write content to a database.",
   },
 } satisfies Record<string, { label: string; title: string; copy: string }>;
+
+const youtubeDialogContent = {
+  about: {
+    label: "About",
+    title: "Keep the words, lose the player.",
+    copy: "This small self-hosted tool turns the available captions from a public YouTube video into readable Markdown.",
+  },
+  how: {
+    label: "How it works",
+    title: "Fetch. Group. Convert.",
+    copy: "The server validates the YouTube link, retrieves its default caption track, groups the transcript into readable paragraphs, and returns Markdown.",
+  },
+  privacy: {
+    label: "Privacy",
+    title: "Stateless by design.",
+    copy: "Video URLs and transcripts are processed in memory and sent only to YouTube for caption retrieval. The application keeps no history or database.",
+  },
+} satisfies Record<string, { label: string; title: string; copy: string }>;
+
+const dialogContent = mode.mode === "youtube" ? youtubeDialogContent : articleDialogContent;
 
 function getDialogContent(key: string | undefined):
   | { label: string; title: string; copy: string }
@@ -420,4 +456,27 @@ dialog.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 });
 
-renderDocument(sampleDocument);
+function applyMode(): void {
+  document.title = mode.title;
+  document
+    .querySelector<HTMLMetaElement>('meta[name="description"]')
+    ?.setAttribute("content", mode.description);
+  document.body.dataset.mode = mode.mode;
+  pageTitle.innerHTML = mode.headingHtml;
+  heroDescription.textContent = mode.lede;
+  urlLabel.textContent = mode.inputLabel;
+  urlInput.value = mode.initialValue;
+  urlInput.placeholder = mode.placeholder;
+  submitButton.querySelector("span")?.replaceChildren(mode.submitLabel);
+
+  document.querySelectorAll<HTMLAnchorElement>("[data-conversion-mode]").forEach((link) => {
+    const active = link.dataset.conversionMode === mode.mode;
+    link.classList.toggle("is-active", active);
+    if (active) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
+}
+
+applyMode();
+if (mode.initialDocument) renderDocument(mode.initialDocument);
+else renderEmptyState();

@@ -275,17 +275,21 @@ a {
   gap: var(--space-8);
 }
 
-.wordmark {
+.brand-cluster {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.brand-home {
+  display: inline-grid;
+  width: var(--control-height-touch);
+  height: var(--control-height-touch);
+  flex: 0 0 auto;
+  place-items: center;
   color: var(--color-foreground);
-  font-size: var(--type-wordmark);
-  font-weight: var(--weight-semibold);
-  line-height: 1;
-  letter-spacing: var(--tracking-wordmark);
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .brand-mark {
@@ -294,9 +298,53 @@ a {
   height: var(--brand-mark-size);
 }
 
-.wordmark span span {
-  margin-inline: 0.08em;
-  letter-spacing: 0;
+.mode-switch {
+  display: inline-flex;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-translucent);
+}
+
+.mode-option {
+  min-height: var(--control-height-touch);
+  padding: var(--space-2) var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  color: var(--color-muted);
+  font-size: var(--type-compact);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-duration) var(--motion-ease),
+    color var(--motion-duration) var(--motion-ease);
+}
+
+.mode-option + .mode-option {
+  border-left: var(--border-width) solid var(--color-border);
+}
+
+.mode-option:hover:not(.is-active) {
+  color: var(--color-foreground);
+  background: var(--color-surface-subtle);
+}
+
+.mode-option.is-active {
+  color: var(--color-on-contrast);
+  background: var(--color-foreground);
+}
+
+.mode-source {
+  font-weight: var(--weight-semibold);
+}
+
+.mode-output {
+  opacity: 0.74;
 }
 
 .site-nav {
@@ -579,6 +627,16 @@ h1 {
   line-height: var(--leading-code);
 }
 
+.markdown-preview.is-empty code {
+  max-width: 34rem;
+  display: block;
+  color: var(--color-muted);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-variant-numeric: normal;
+  line-height: var(--leading-body);
+}
+
 .detail-label {
   margin: 0;
   color: var(--color-muted);
@@ -750,9 +808,27 @@ h1 {
 }
 
 @media (max-width: 38.75rem) {
-  .site-nav .nav-link:nth-child(2),
-  .site-nav .nav-link:nth-child(3) {
+  .site-header {
+    gap: var(--space-3);
+  }
+
+  .site-nav {
     display: none;
+  }
+
+  .brand-cluster {
+    width: 100%;
+    gap: var(--space-2);
+  }
+
+  .mode-switch {
+    flex: 1;
+  }
+
+  .mode-option {
+    flex: 1;
+    justify-content: center;
+    padding-inline: var(--space-3);
   }
 
   .hero {
