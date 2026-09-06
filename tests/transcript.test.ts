@@ -107,6 +107,26 @@ describe("YouTube caption selection", () => {
       languageCode: "en",
     });
   });
+
+  it("uses the caption track associated with the default audio track", () => {
+    const playerJson = {
+      captions: {
+        playerCaptionsTracklistRenderer: {
+          captionTracks: [{ languageCode: "ar" }, { languageCode: "es" }],
+          audioTracks: [
+            { captionTrackIndices: [1], hasDefaultTrack: true },
+            { captionTrackIndices: [0] },
+          ],
+        },
+      },
+    };
+
+    preferDefaultCaptionTrack(playerJson);
+
+    expect(playerJson.captions.playerCaptionsTracklistRenderer.captionTracks[0]).toEqual({
+      languageCode: "es",
+    });
+  });
 });
 
 describe("YouTube transcript extraction", () => {
@@ -134,6 +154,56 @@ describe("YouTube transcript extraction", () => {
       status: { kind: "complete" },
     });
     expect(document.wordCount).toBeGreaterThan(20);
+  });
+
+  it("falls back to captions exposed in the watch page", async () => {
+    const fallbackTrackUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en`;
+    const watchPage = `<script>var ytInitialPlayerResponse = ${JSON.stringify({
+      playabilityStatus: { status: "OK" },
+      videoDetails: { title: "Fallback video", author: "Fallback channel" },
+      captions: {
+        playerCaptionsTracklistRenderer: {
+          captionTracks: [{ languageCode: "en", baseUrl: fallbackTrackUrl }],
+          audioTracks: [{ captionTrackIndices: [0], hasDefaultTrack: true }],
+        },
+      },
+    })};</script>`;
+    const fetchTranscriptMock = vi.fn(async () => {
+      const NotAvailableError = class YoutubeTranscriptNotAvailableError extends Error {};
+      throw new NotAvailableError();
+    });
+    const fetchMock: typeof fetch = vi.fn(async (input) =>
+      String(input) === canonicalUrl
+        ? new Response(watchPage)
+        : new Response(
+            '<transcript><text start="0" dur="2">Fallback &amp; transcript.</text></transcript>',
+          ),
+    );
+
+    const document = await extractYoutubeTranscript(canonicalUrl, {
+      fetchTranscript: fetchTranscriptMock,
+      fetch: fetchMock,
+      now: () => new Date("2026-09-06T12:00:00.000Z"),
+    });
+
+    expect(document).toMatchObject({
+      title: "Fallback video",
+      author: "Fallback channel",
+      filename: "fallback-video.md",
+      wordCount: 3,
+    });
+    expect(document.markdown).toContain("Fallback & transcript.");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      canonicalUrl,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      fallbackTrackUrl,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it.each([

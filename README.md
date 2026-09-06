@@ -1,9 +1,9 @@
 # Markdown converters
 
-A small, stateless web app with two focused tools:
+A small, stateless web app with a focused HTML → Markdown tool and an optional YouTube transcript tool:
 
 - HTML → Markdown fetches server-rendered HTML and isolates the readable article.
-- YouTube → Markdown retrieves a public video's available captions and groups them into readable paragraphs.
+- YouTube → Markdown retrieves a public video's available captions and groups them into readable paragraphs when enabled.
 
 Both modes return Markdown ready to preview, copy, or download for Obsidian.
 
@@ -18,6 +18,16 @@ Both modes return Markdown ready to preview, copy, or download for Obsidian.
 - pnpm for dependency management and scripts
 
 The application does not use Chromium, Playwright, a database, authentication, history, audio transcription, or direct Obsidian integration.
+
+## Feature flags
+
+YouTube support is disabled by default. Set `ENABLE_YOUTUBE=true` when building and running the app to enable the `/youtube` mode and `/api/transcript` route. Any other value, or an unset variable, keeps the deployment HTML-only.
+
+The client bundle is static, so rebuild and redeploy after changing the flag. For a local YouTube-enabled run:
+
+```bash
+ENABLE_YOUTUBE=true pnpm dev
+```
 
 ## Local development
 
@@ -55,6 +65,13 @@ Build and run directly:
 pnpm install --frozen-lockfile
 pnpm build
 pnpm start
+```
+
+Set `ENABLE_YOUTUBE` in the Dokploy environment before the build and deploy. For the included Dockerfile, pass the same value as a build argument and runtime environment variable:
+
+```bash
+docker build --build-arg ENABLE_YOUTUBE=true -t html-to-md .
+docker run --rm -e ENABLE_YOUTUBE=true -p 4173:4173 html-to-md
 ```
 
 Or build the included container:

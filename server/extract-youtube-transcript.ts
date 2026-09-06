@@ -10,6 +10,8 @@ import { ExtractionFailure } from "./errors.js";
 
 const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const REQUEST_TIMEOUT_MS = 15_000;
+const YOUTUBE_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const YOUTUBE_HOSTS = new Set([
   "youtube.com",
   "www.youtube.com",
@@ -31,6 +33,7 @@ type TranscriptPayload = {
 
 type ExtractYoutubeOptions = {
   fetchTranscript?: TranscriptFetcher;
+  fetch?: typeof fetch;
   now?: () => Date;
 };
 
@@ -247,7 +250,7 @@ export function buildYoutubeMarkdown(options: YoutubeMarkdownOptions): string {
 }
 
 function mapTranscriptFailure(cause: unknown): never {
-  const name = cause instanceof Error ? cause.constructor.name : "";
+  const name = transcriptErrorName(cause);
 
   if (name === "YoutubeTranscriptVideoUnavailableError") {
     throw new ExtractionFailure({
@@ -297,16 +300,78 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-export function preferDefaultCaptionTrack(playerJson: unknown): unknown {
-  if (!isRecord(playerJson) || !isRecord(playerJson.captions)) return playerJson;
-  const renderer = playerJson.captions.playerCaptionsTracklistRenderer;
-  if (!isRecord(renderer) || !Array.isArray(renderer.captionTracks)) return playerJson;
+function transcriptErrorName(cause: unknown): string {
+  if (!(cause instanceof Error)) return "";
+  return cause.name !== "Error" ? cause.name : cause.constructor.name;
+}
 
+function namedTranscriptError(name: string, message: string): Error {
+  const error = new Error(message);
+  error.name = name;
+  return error;
+}
+
+function captionRenderer(value: unknown): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+
+  const captions = value.captions;
+  if (isRecord(captions) && isRecord(captions.playerCaptionsTracklistRenderer)) {
+    return captions.playerCaptionsTracklistRenderer;
+  }
+
+  return isRecord(value.playerCaptionsTracklistRenderer)
+    ? value.playerCaptionsTracklistRenderer
+    : null;
+}
+
+function validCaptionTrackIndex(value: unknown, trackCount: number): number | undefined {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value < trackCount
+    ? value
+    : undefined;
+}
+
+function defaultCaptionTrackIndex(renderer: Record<string, unknown>): number | undefined {
+  if (!Array.isArray(renderer.captionTracks)) return undefined;
+
+  const trackCount = renderer.captionTracks.length;
   const audioTracks = Array.isArray(renderer.audioTracks) ? renderer.audioTracks : [];
-  const defaultTrack = audioTracks.find(
-    (track) => isRecord(track) && Number.isInteger(track.defaultCaptionTrackIndex),
+  const defaultAudioTrack =
+    audioTracks.find((track) => isRecord(track) && track.hasDefaultTrack === true) ??
+    audioTracks.find(
+      (track) => isRecord(track) && Number.isInteger(track.defaultCaptionTrackIndex),
+    ) ??
+    audioTracks[0];
+
+  if (isRecord(defaultAudioTrack)) {
+    const explicitIndex = validCaptionTrackIndex(
+      defaultAudioTrack.defaultCaptionTrackIndex,
+      trackCount,
+    );
+    if (explicitIndex !== undefined) return explicitIndex;
+
+    const associatedIndex = Array.isArray(defaultAudioTrack.captionTrackIndices)
+      ? defaultAudioTrack.captionTrackIndices.find((index) =>
+          validCaptionTrackIndex(index, trackCount) !== undefined,
+        )
+      : undefined;
+    const validAssociatedIndex = validCaptionTrackIndex(associatedIndex, trackCount);
+    if (validAssociatedIndex !== undefined) return validAssociatedIndex;
+  }
+
+  const explicitlyDefaultTrack = renderer.captionTracks.findIndex(
+    (track) => isRecord(track) && (track.isDefault === true || track.default === true),
   );
-  const defaultIndex = isRecord(defaultTrack) ? defaultTrack.defaultCaptionTrackIndex : undefined;
+  return validCaptionTrackIndex(explicitlyDefaultTrack, trackCount);
+}
+
+export function preferDefaultCaptionTrack(playerJson: unknown): unknown {
+  const renderer = captionRenderer(playerJson);
+  if (!renderer || !Array.isArray(renderer.captionTracks)) return playerJson;
+
+  const defaultIndex = defaultCaptionTrackIndex(renderer);
 
   if (
     typeof defaultIndex === "number" &&
@@ -354,6 +419,241 @@ async function fetchPlayerWithDefaultTrack(params: FetchParams): Promise<Respons
   }
 }
 
+function captionTracksFromPlayer(playerJson: unknown): Record<string, unknown>[] {
+  const renderer = captionRenderer(playerJson);
+  return renderer && Array.isArray(renderer.captionTracks)
+    ? renderer.captionTracks.filter(isRecord)
+    : [];
+}
+
+function captionTrackUrl(track: Record<string, unknown>): string | null {
+  const value = track.baseUrl ?? track.url;
+  return typeof value === "string" && value !== "" ? value : null;
+}
+
+function playerDetails(
+  playerJson: unknown,
+  videoId: string,
+): Pick<TranscriptResult["videoDetails"], "title" | "author"> {
+  const details = isRecord(playerJson) && isRecord(playerJson.videoDetails)
+    ? playerJson.videoDetails
+    : null;
+
+  return {
+    title: details && typeof details.title === "string" ? details.title : `YouTube video ${videoId}`,
+    author: details && typeof details.author === "string" ? details.author : "",
+  };
+}
+
+function extractJsonObjectAfterAssignment(body: string, variableName: string): unknown | null {
+  const assignment = new RegExp(`(?:^|[^\\w])${variableName}\\s*=\\s*`, "u").exec(body);
+  if (!assignment) return null;
+
+  const start = assignment.index + assignment[0].length;
+  const openingBrace = body.indexOf("{", start);
+  if (openingBrace < 0) return null;
+
+  let depth = 0;
+  let escaped = false;
+  let inString = false;
+
+  for (let index = openingBrace; index < body.length; index += 1) {
+    const character = body[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (character === '"') {
+      inString = true;
+    } else if (character === "{") {
+      depth += 1;
+    } else if (character === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(body.slice(openingBrace, index + 1));
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function playerResponseFromWatchPage(body: string): unknown | null {
+  return extractJsonObjectAfterAssignment(body, "ytInitialPlayerResponse");
+}
+
+function numericValue(value: unknown): number | undefined {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function transcriptSegmentsFromBody(body: string, language: string): TranscriptSegment[] {
+  const segments: TranscriptSegment[] = [];
+  const textPattern = /<text\b([^>]*)>([\s\S]*?)<\/text>/giu;
+
+  for (const match of body.matchAll(textPattern)) {
+    const attributes = match[1] ?? "";
+    const text = match[2]
+      ?.replace(/<\/?s\b[^>]*>/giu, "")
+      .trim();
+    const offset = attributes.match(/\bstart\s*=\s*["']([^"']+)["']/iu)?.[1];
+    const duration = attributes.match(/\bdur\s*=\s*["']([^"']+)["']/iu)?.[1];
+    const parsedOffset = numericValue(offset);
+    const parsedDuration = numericValue(duration);
+
+    if (text && parsedOffset !== undefined && parsedDuration !== undefined) {
+      segments.push({
+        text: decodeEntities(text),
+        duration: parsedDuration,
+        offset: parsedOffset,
+        lang: language,
+      });
+    }
+  }
+
+  if (segments.length > 0) return segments;
+
+  try {
+    const json = JSON.parse(body);
+    if (!isRecord(json) || !Array.isArray(json.events)) return [];
+
+    for (const event of json.events) {
+      if (!isRecord(event) || !Array.isArray(event.segs)) continue;
+
+      const text = event.segs
+        .filter(isRecord)
+        .map((segment) => (typeof segment.utf8 === "string" ? segment.utf8 : ""))
+        .join("")
+        .trim();
+      const startMilliseconds = numericValue(event.tStartMs);
+      const durationMilliseconds = numericValue(event.dDurationMs);
+
+      if (text && startMilliseconds !== undefined) {
+        segments.push({
+          text: decodeEntities(text),
+          duration: durationMilliseconds !== undefined ? durationMilliseconds / 1_000 : 0,
+          offset: startMilliseconds / 1_000,
+          lang: language,
+        });
+      }
+    }
+  } catch {
+    // The XML parser above is the normal path; malformed alternate formats are unavailable.
+  }
+
+  return segments;
+}
+
+async function fetchWatchPageTranscript(
+  reference: YoutubeVideoReference,
+  fetchImpl: typeof fetch,
+): Promise<TranscriptPayload> {
+  const signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const headers = {
+    "accept-language": "en-US,en;q=0.9",
+    "user-agent": YOUTUBE_USER_AGENT,
+  };
+  const pageResponse = await fetchImpl(reference.canonicalUrl, { headers, signal });
+
+  if (pageResponse.status === 429) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptTooManyRequestError",
+      "YouTube is receiving too many requests.",
+    );
+  }
+  if (!pageResponse.ok) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptVideoUnavailableError",
+      `The video with ID "${reference.videoId}" is unavailable.`,
+    );
+  }
+
+  const pageBody = await pageResponse.text();
+  if (pageBody.includes('class="g-recaptcha"')) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptTooManyRequestError",
+      "YouTube is receiving too many requests.",
+    );
+  }
+
+  const playerJson = playerResponseFromWatchPage(pageBody);
+  if (!playerJson) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptNotAvailableError",
+      `No transcripts are available for the video with ID "${reference.videoId}".`,
+    );
+  }
+
+  const playabilityStatus = isRecord(playerJson) && isRecord(playerJson.playabilityStatus)
+    ? playerJson.playabilityStatus.status
+    : undefined;
+  if (typeof playabilityStatus === "string" && playabilityStatus !== "OK") {
+    throw namedTranscriptError(
+      "YoutubeTranscriptVideoUnavailableError",
+      `The video with ID "${reference.videoId}" is unavailable.`,
+    );
+  }
+
+  preferDefaultCaptionTrack(playerJson);
+  const track = captionTracksFromPlayer(playerJson)[0];
+  if (!track) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptNotAvailableError",
+      `No transcripts are available for the video with ID "${reference.videoId}".`,
+    );
+  }
+  const transcriptUrl = track ? captionTrackUrl(track) : null;
+  if (!transcriptUrl) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptNotAvailableError",
+      `No transcripts are available for the video with ID "${reference.videoId}".`,
+    );
+  }
+
+  const transcriptResponse = await fetchImpl(transcriptUrl, { headers, signal });
+  if (transcriptResponse.status === 429) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptTooManyRequestError",
+      "YouTube is receiving too many requests.",
+    );
+  }
+  if (!transcriptResponse.ok) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptNotAvailableError",
+      `No transcripts are available for the video with ID "${reference.videoId}".`,
+    );
+  }
+
+  const language = track.languageCode;
+  const segments = transcriptSegmentsFromBody(
+    await transcriptResponse.text(),
+    typeof language === "string" && language !== "" ? language : "und",
+  );
+  if (segments.length === 0) {
+    throw namedTranscriptError(
+      "YoutubeTranscriptNotAvailableError",
+      `No transcripts are available for the video with ID "${reference.videoId}".`,
+    );
+  }
+
+  return {
+    videoDetails: playerDetails(playerJson, reference.videoId),
+    segments,
+  };
+}
+
 const defaultTranscriptFetcher: TranscriptFetcher = async (videoId, options) => {
   const result = await fetchTranscript(videoId, options);
   if (Array.isArray(result)) {
@@ -361,6 +661,12 @@ const defaultTranscriptFetcher: TranscriptFetcher = async (videoId, options) => 
   }
   return result;
 };
+
+function isCaptionDiscoveryFailure(cause: unknown): boolean {
+  const name = transcriptErrorName(cause);
+  return name === "YoutubeTranscriptDisabledError" ||
+    name === "YoutubeTranscriptNotAvailableError";
+}
 
 export async function extractYoutubeTranscript(
   input: string,
@@ -379,7 +685,19 @@ export async function extractYoutubeTranscript(
       playerFetch: fetchPlayerWithDefaultTrack,
     });
   } catch (cause) {
-    mapTranscriptFailure(cause);
+    const canUseWatchPageFallback =
+      isCaptionDiscoveryFailure(cause) &&
+      (options.fetchTranscript === undefined || options.fetch !== undefined);
+
+    if (!canUseWatchPageFallback) {
+      mapTranscriptFailure(cause);
+    }
+
+    try {
+      payload = await fetchWatchPageTranscript(reference, options.fetch ?? fetch);
+    } catch (fallbackCause) {
+      mapTranscriptFailure(fallbackCause);
+    }
   }
 
   const segments = payload.segments.filter(({ text }) => text.trim() !== "");

@@ -1,14 +1,13 @@
 import path from "node:path";
 import fastifyStatic from "@fastify/static";
 import middie from "@fastify/middie";
-import Fastify from "fastify";
+import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { createServer as createViteServer } from "vite";
 import type { ExtractionApiResponse } from "../shared/contracts.js";
+import { isFeatureEnabled } from "../shared/feature-flags.js";
 import { ExtractionFailure } from "./errors.js";
 import { extractArticle } from "./extract-article.js";
-import { extractYoutubeTranscript } from "./extract-youtube-transcript.js";
 import { registerExtractionRoute } from "./extraction-route.js";
-import { registerTranscriptRoute } from "./transcript-route.js";
 
 function readArgument(name: string, fallback: string): string {
   const index = process.argv.indexOf(name);
@@ -26,6 +25,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65_535) {
 
 const root = process.cwd();
 const production = process.env.NODE_ENV === "production";
+const youtubeEnabled = isFeatureEnabled(process.env.ENABLE_YOUTUBE);
 const app = Fastify({
   logger: {
     level: process.env.LOG_LEVEL ?? "info",
@@ -35,7 +35,20 @@ const app = Fastify({
 
 app.get("/api/health", async () => ({ status: "ok" }));
 registerExtractionRoute(app, { extract: extractArticle });
-registerTranscriptRoute(app, { extract: extractYoutubeTranscript });
+
+if (youtubeEnabled) {
+  const [{ extractYoutubeTranscript }, { registerTranscriptRoute }] = await Promise.all([
+    import("./extract-youtube-transcript.js"),
+    import("./transcript-route.js"),
+  ]);
+
+  registerTranscriptRoute(app, { extract: extractYoutubeTranscript });
+} else {
+  const redirectToArticle = async (_request: FastifyRequest, reply: FastifyReply) =>
+    reply.redirect("/");
+  app.get("/youtube", redirectToArticle);
+  app.get("/youtube/", redirectToArticle);
+}
 
 app.setErrorHandler((error, _request, reply) => {
   if (error instanceof ExtractionFailure) {

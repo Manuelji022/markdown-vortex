@@ -2,6 +2,8 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 RUN corepack enable
+ARG ENABLE_YOUTUBE=false
+ENV ENABLE_YOUTUBE=${ENABLE_YOUTUBE}
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
@@ -10,6 +12,8 @@ RUN pnpm build
 FROM node:24-alpine AS runtime
 
 ENV NODE_ENV=production
+ARG ENABLE_YOUTUBE=false
+ENV ENABLE_YOUTUBE=${ENABLE_YOUTUBE}
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./

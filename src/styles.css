@@ -127,6 +127,10 @@
   --layer-toast: 10;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 *,
 *::before,
 *::after {
