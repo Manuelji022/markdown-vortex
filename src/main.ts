@@ -81,6 +81,9 @@ type ModeConfiguration = {
   initialDocument: ExtractedDocument | null;
 };
 
+const isYoutubePath = window.location.pathname.replace(/\/+$/, "") === "/youtube";
+const youtubeEnabled = __YOUTUBE_ENABLED__;
+
 const articleMode: ModeConfiguration = {
   mode: "article",
   endpoint: "/api/extract",
@@ -89,8 +92,8 @@ const articleMode: ModeConfiguration = {
   headingHtml: "Paste a link.<br />Keep the article.",
   lede: "Turn readable HTML into clean Markdown.",
   inputLabel: "Article URL",
-  placeholder: "https://example.com/article",
-  initialValue: SAMPLE_URL,
+  placeholder: SAMPLE_URL,
+  initialValue: "",
   submitLabel: "Extract Markdown",
   loadingLabel: "Extracting…",
   loadingStatus: "Fetching HTML…",
@@ -120,7 +123,7 @@ const youtubeMode: ModeConfiguration = {
   initialDocument: null,
 };
 
-const mode = window.location.pathname.replace(/\/+$/, "") === "/youtube"
+const mode = youtubeEnabled && isYoutubePath
   ? youtubeMode
   : articleMode;
 
@@ -161,6 +164,9 @@ const formMessage = requireElement("form-message");
 const pageTitle = requireElement("page-title");
 const heroDescription = requireElement("hero-description");
 const urlLabel = requireElement("url-label");
+const youtubeModeLink = document.querySelector<HTMLAnchorElement>(
+  '[data-conversion-mode="youtube"]',
+);
 const markdownOutput = requireElement("markdown-output");
 const markdownPreview = requireElement("markdown-preview");
 const captureStatus = requireElement("capture-status");
@@ -457,6 +463,11 @@ dialog.addEventListener("click", (event) => {
 });
 
 function applyMode(): void {
+  if (youtubeModeLink) youtubeModeLink.hidden = !youtubeEnabled;
+  if (!youtubeEnabled && isYoutubePath) {
+    window.history.replaceState(null, "", "/");
+  }
+
   document.title = mode.title;
   document
     .querySelector<HTMLMetaElement>('meta[name="description"]')
