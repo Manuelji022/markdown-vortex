@@ -110,7 +110,6 @@
   --control-height-touch: 2.75rem;
   --feature-control-height: 3.625rem;
   --primary-action-min-width: 12rem;
-  --brand-mark-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.75rem);
   --icon-size: 1.375rem;
 
   --radius-small: 0.375rem;
@@ -273,29 +272,6 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
-}
-
-.brand-cluster {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  min-width: 0;
-}
-
-.brand-home {
-  display: inline-grid;
-  width: var(--control-height-touch);
-  height: var(--control-height-touch);
-  flex: 0 0 auto;
-  place-items: center;
-  color: var(--color-foreground);
-  text-decoration: none;
-}
-
-.brand-mark {
-  display: block;
-  width: var(--brand-mark-size);
-  height: var(--brand-mark-size);
 }
 
 .mode-switch {
@@ -814,11 +790,6 @@ h1 {
 
   .site-nav {
     display: none;
-  }
-
-  .brand-cluster {
-    width: 100%;
-    gap: var(--space-2);
   }
 
   .mode-switch {

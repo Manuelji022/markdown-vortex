@@ -13,37 +13,26 @@
   <body>
     <div class="site-shell">
       <header class="site-header" aria-label="Primary navigation">
-        <div class="brand-cluster">
-          <a class="brand-home" href="/" aria-label="Markdown converter home">
-            <img
-              class="brand-mark"
-              src="/assets/icons/triangle.svg"
-              alt=""
-              width="28"
-              height="28"
-            />
+        <nav class="mode-switch" aria-label="Conversion mode">
+          <a
+            class="mode-option"
+            href="/"
+            data-conversion-mode="article"
+            aria-label="HTML to Markdown"
+          >
+            <span class="mode-source">html</span>
+            <span class="mode-output" aria-hidden="true">→ md</span>
           </a>
-          <nav class="mode-switch" aria-label="Conversion mode">
-            <a
-              class="mode-option"
-              href="/"
-              data-conversion-mode="article"
-              aria-label="HTML to Markdown"
-            >
-              <span class="mode-source">html</span>
-              <span class="mode-output" aria-hidden="true">→ md</span>
-            </a>
-            <a
-              class="mode-option"
-              href="/youtube"
-              data-conversion-mode="youtube"
-              aria-label="YouTube transcript to Markdown"
-            >
-              <span class="mode-source">youtube</span>
-              <span class="mode-output" aria-hidden="true">→ md</span>
-            </a>
-          </nav>
-        </div>
+          <a
+            class="mode-option"
+            href="/youtube"
+            data-conversion-mode="youtube"
+            aria-label="YouTube transcript to Markdown"
+          >
+            <span class="mode-source">youtube</span>
+            <span class="mode-output" aria-hidden="true">→ md</span>
+          </a>
+        </nav>
         <nav class="site-nav" aria-label="Information">
           <button class="nav-link" type="button" data-dialog-section="how">
             How it works
