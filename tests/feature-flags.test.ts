@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isFeatureEnabled } from "../shared/feature-flags.js";
+import { isFeatureEnabled, isYoutubeEnabled } from "../shared/feature-flags.js";
 
 describe("feature flags", () => {
   it.each(["1", "on", "true", "yes", " TRUE "])(
@@ -13,6 +13,13 @@ describe("feature flags", () => {
     "leaves a flag disabled for %s",
     (value) => {
       expect(isFeatureEnabled(value)).toBe(false);
+    },
+  );
+
+  it.each(["1", "on", "true", "yes", " TRUE ", undefined, "", "0", "false", "off", "no", "maybe"])(
+    "leaves YouTube disabled for %s while YOUTUBE_AVAILABLE is false",
+    (value) => {
+      expect(isYoutubeEnabled(value)).toBe(false);
     },
   );
 });

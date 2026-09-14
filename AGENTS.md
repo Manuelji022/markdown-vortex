@@ -17,6 +17,7 @@ Build app UI in `src/`. The app is deployed as a Node.js service with Dokploy/Ra
 - Provide two shareable modes when enabled: HTML → Markdown at `/` and YouTube transcript → Markdown at `/youtube`, using a compact header mode switch.
 - YouTube mode is captions-only and keyless: accept public video URLs, use the default available caption track, group it into readable paragraphs without timestamps, and do not add audio transcription or proxies.
 - Keep YouTube support behind the opt-in `ENABLE_YOUTUBE` deployment flag; an unset or false flag keeps the app HTML-only and leaves the transcript route unavailable.
+- YouTube mode is temporarily hard-disabled via `YOUTUBE_AVAILABLE` in `shared/feature-flags.ts` until transcript extraction is fixed. The `ENABLE_YOUTUBE` flag alone must not re-enable it.
 - Preserve the selected mockup's minimalist monochrome editorial composition, oversized sans-serif headline, restrained navigation, soft neutral atmosphere, fine borders, generous whitespace, and high-contrast black actions.
 - Use a clearly public, non-paywalled article for the initial demo state; the first preview should communicate a complete successful capture rather than a partial or restricted result.
 - Prefer static semantic HTML and CSS for all visible structure and styling. Keep client JavaScript limited to the extraction request and essential interactive states.
