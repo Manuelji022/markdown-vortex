@@ -1,9 +1,9 @@
 import { defineConfig, loadEnv } from "vite";
-import { isFeatureEnabled } from "./shared/feature-flags.js";
+import { isYoutubeEnabled } from "./shared/feature-flags.js";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
-  const youtubeEnabled = isFeatureEnabled(env.ENABLE_YOUTUBE);
+  const youtubeEnabled = isYoutubeEnabled(env.ENABLE_YOUTUBE);
 
   return {
     define: {

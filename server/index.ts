@@ -4,7 +4,7 @@ import middie from "@fastify/middie";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { createServer as createViteServer } from "vite";
 import type { ExtractionApiResponse } from "../shared/contracts.js";
-import { isFeatureEnabled } from "../shared/feature-flags.js";
+import { isYoutubeEnabled } from "../shared/feature-flags.js";
 import { ExtractionFailure } from "./errors.js";
 import { extractArticle } from "./extract-article.js";
 import { registerExtractionRoute } from "./extraction-route.js";
@@ -25,7 +25,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65_535) {
 
 const root = process.cwd();
 const production = process.env.NODE_ENV === "production";
-const youtubeEnabled = isFeatureEnabled(process.env.ENABLE_YOUTUBE);
+const youtubeEnabled = isYoutubeEnabled(process.env.ENABLE_YOUTUBE);
 const app = Fastify({
   logger: {
     level: process.env.LOG_LEVEL ?? "info",

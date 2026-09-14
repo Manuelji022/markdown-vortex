@@ -23,7 +23,9 @@ The application does not use Chromium, Playwright, a database, authentication, h
 
 YouTube support is disabled by default. Set `ENABLE_YOUTUBE=true` when building and running the app to enable the `/youtube` mode and `/api/transcript` route. Any other value, or an unset variable, keeps the deployment HTML-only.
 
-The client bundle is static, so rebuild and redeploy after changing the flag. For a local YouTube-enabled run:
+YouTube mode is temporarily hard-disabled. `YOUTUBE_AVAILABLE` in `shared/feature-flags.ts` is `false`, so `/youtube` and `/api/transcript` stay off even when `ENABLE_YOUTUBE=true`. Set `YOUTUBE_AVAILABLE` back to `true` before `ENABLE_YOUTUBE` can enable the feature again.
+
+The client bundle is static, so rebuild and redeploy after changing the flag. For a local YouTube-enabled run after `YOUTUBE_AVAILABLE` is `true` again:
 
 ```bash
 ENABLE_YOUTUBE=true pnpm dev
